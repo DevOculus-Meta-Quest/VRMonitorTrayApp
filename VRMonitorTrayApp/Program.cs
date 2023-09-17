@@ -85,19 +85,36 @@ public class VRMonitorTrayApp
         try
         {
             var processes = Process.GetProcesses();
-            foreach (var process in processes)
+            var currentOVRProcesses = processes.Where(p => p.ProcessName.Contains("OVR")).ToList();
+            var previousOVRProcesses = new List<string>(); // Store the names of previously detected OVR processes
+
+            // Check for new processes
+            foreach (var process in currentOVRProcesses)
             {
-                if (process.ProcessName.Contains("OVR"))
+                if (!previousOVRProcesses.Contains(process.ProcessName))
                 {
-                    Log($"Found process: {process.ProcessName}");
+                    Log($"Process started: {process.ProcessName}");
                 }
             }
+
+            // Check for stopped processes
+            foreach (var processName in previousOVRProcesses)
+            {
+                if (!currentOVRProcesses.Any(p => p.ProcessName == processName))
+                {
+                    Log($"Process stopped: {processName}");
+                }
+            }
+
+            // Update the list of previous processes
+            previousOVRProcesses = currentOVRProcesses.Select(p => p.ProcessName).ToList();
         }
         catch (Exception ex)
         {
             Log($"Error monitoring processes: {ex.Message}");
         }
     }
+
 
     private static void Log(string message)
     {
